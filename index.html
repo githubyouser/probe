@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Guess the Word Game</title>
+  
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 16px;
+    }
+    
+    h1 {
+      text-align: center;
+    }
+    
+    form {
+      width: 300px;
+      margin: 20px auto;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 4px;  
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 10px;
+    }
+    
+    input[type="text"] {
+      width: 100px;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+   
+    button {
+      padding: 10px 15px;
+      background: #4285f4;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+	
+	#blanks {
+	  font-size: 24px;
+	  text-align: center;
+	  letter-spacing: 5px;
+}
+
+	#guessInput {
+	text-align: center;
+	}
+
+  </style>
+
+</head>
+
+<body>
+  <h1>Guess the Word!</h1>
+  
+  <form id="secretWordForm">
+    <label>Enter secret word: </label>
+    <input type="text" id="secretWordInput">
+    <button>Submit</button>
+  </form>
+
+  <div id="blanks"></div>
+
+  <label>Guess a letter:
+    <input type="text" id="guessInput">
+  </label>
+  <button onclick="makeGuess()">Guess!</button>
+
+  <script>
+    // Secret word variables
+    var secretWord = "";
+    var secretWordInput = document.getElementById("secretWordInput");
+    var blanksDiv = document.getElementById("blanks");
+
+    // Submit handler for secret word input form
+    function submitSecretWord(e) {
+      e.preventDefault();
+      
+      // Get secret word and hide input
+      secretWord = secretWordInput.value;
+      secretWordInput.style.display = "none";
+      
+      // Create blanks
+      for(var i = 0; i < secretWord.length; i++) {
+        blanksDiv.innerText += "_";
+      }
+    }
+
+	// Guess handler
+	function makeGuess() {
+	  var guess = document.getElementById("guessInput").value;
+	  document.getElementById("guessInput").value = "";
+
+	  // Loop through secret word and replace blanks with matching letters
+	  for(var i = 0; i < secretWord.length; i++) {
+		if(secretWord[i].toLowerCase() === guess.toLowerCase()) {
+		  // Make blanks an array we can manipulate
+		  var blankLetters = blanksDiv.innerText.split("");
+		  
+		  // Replace this blank with the guess letter
+		  blankLetters[i] = guess;
+
+		  // Join array back into string and update div
+		  blanksDiv.innerText = blankLetters.join("");
+		} 
+	  }
+	}
+
+    // Listen for submit
+    var form = document.getElementById("secretWordForm");
+    form.addEventListener("submit", submitSecretWord);
+	
+	//Listen for guessinput Enter
+	var guessInput = document.getElementById("guessInput");
+
+	guessInput.addEventListener("keyup", function(e) {
+	  if (e.key === "Enter") {
+		makeGuess();
+	  }
+	});
+	
+
+// ONLINE MODE
+
+// Offer side (player 1)
+
+const peerConnection = new RTCPeerConnection();
+
+// Set up data channel
+const dataChannel = peerConnection.createDataChannel("game");
+
+// Share URL for player 2 to join 
+const roomURL = window.location.href;
+
+// Listen for connection and messages
+dataChannel.onmessage = (e) => {
+  // Handle guesses, revealed letters, etc
+  const msg = JSON.parse(e.data);
+  
+  if(msg.type === "guess") {
+    makeGuess(msg.letter);
+  }
+
+  //...
+};
+
+// Join side (player 2)
+
+const peerConnection = new RTCPeerConnection(); 
+
+peerConnection.ondatachannel = (e) => {
+
+  const dataChannel = e.channel;
+
+  dataChannel.onmessage = (e) => {
+    // Handle incoming game data
+  };
+
+  dataChannel.send(JSON.stringify({
+    type: "guess", 
+    letter: "A" 
+  }));
+
+}
+
+//...
+
+peerConnection.join(roomURL);
+
+
+  </script>
+
+</body>
+</html>
